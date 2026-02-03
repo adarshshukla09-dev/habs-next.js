@@ -6,18 +6,41 @@ import { eq, and } from "drizzle-orm";
 
 type TodoInput = {
   userId: string;
-  date: string; // YYYY-MM-DD
+  date: Date;
   title: string;
 };
 
+const formatDateForDb = (date: Date) => date.toISOString().split('T')[0];
+
+export async function ReadDate({ userId }: Pick<TodoInput, "userId">) {
+  try {
+    
+  const dayRecord = await db.query.days.findMany({
+    where: (eq(days.userId, userId)),
+  });
+return dayRecord;
+  } catch (error) {
+    console.log(error)
+  }
+}
 // 1️⃣ Helper to ensure a day exists
 export async function createDate({ userId, date }: Pick<TodoInput, "userId" | "date">) {
+  try {
+    
   const jsDate = new Date(date);
+  const dateString = formatDateForDb(jsDate); // Normalizing to string
+  const existing = await db.query.days.findFirst({
+    where: and(eq(days.userId, userId), eq(days.date, dateString)),
+    
+  })
+
+  if(existing) return existing?.id;
+
   const [newDay] = await db
     .insert(days)
     .values({
       userId,
-      date,
+      date: dateString, // Correctly passing string
       year: jsDate.getFullYear(),
       month: jsDate.getMonth() + 1,
       weekOfMonth: Math.ceil(jsDate.getDate() / 7),
@@ -26,12 +49,18 @@ export async function createDate({ userId, date }: Pick<TodoInput, "userId" | "d
     .returning({ id: days.id });
 
   return newDay.id;
+  } catch (error) {
+    console.log(error)
+  }
 }
 
-// 2️⃣ Create Todo (Uses helper logic)
+// 2️⃣ Create Todo
 export async function createTodoForDate({ userId, date, title }: TodoInput) {
+  const dateString = formatDateForDb(date); // Normalize here
+
   let dayRecord = await db.query.days.findFirst({
-    where: and(eq(days.userId, userId), eq(days.date, date)),
+    // Use dateString, NOT date object
+    where: and(eq(days.userId, userId), eq(days.date, dateString)),
   });
 
   let dayId = dayRecord?.id;
@@ -50,8 +79,10 @@ export async function createTodoForDate({ userId, date, title }: TodoInput) {
 
 // 3️⃣ Read Todos
 export async function ReadTodosForDate({ userId, date }: Pick<TodoInput, "userId" | "date">) {
+  const dateString = formatDateForDb(date); // Normalize here
+
   const dayRecord = await db.query.days.findFirst({
-    where: and(eq(days.userId, userId), eq(days.date, date)),
+    where: and(eq(days.userId, userId), eq(days.date, dateString)),
   });
 
   if (!dayRecord) return [];
@@ -59,14 +90,16 @@ export async function ReadTodosForDate({ userId, date }: Pick<TodoInput, "userId
   return await db.select().from(todos).where(eq(todos.dayId, dayRecord.id));
 }
 
-// 4️⃣ Delete Todo (with Auto-Cleanup of empty days)
+// 4️⃣ Delete Todo
 export async function deleteTodo({
   userId,
   date,
   todoId,
 }: Omit<TodoInput, "title"> & { todoId: string }) {
+  const dateString = formatDateForDb(date); // Normalize here
+
   const dayRecord = await db.query.days.findFirst({
-    where: and(eq(days.userId, userId), eq(days.date, date)),
+    where: and(eq(days.userId, userId), eq(days.date, dateString)),
   });
 
   if (!dayRecord) return { success: false, error: "Day not found" };
@@ -74,8 +107,7 @@ export async function deleteTodo({
   await db
     .delete(todos)
     .where(and(eq(todos.id, todoId), eq(todos.dayId, dayRecord.id)));
-
-  const remainingTodos = await db
+const remainingTodos = await db
     .select()
     .from(todos)
     .where(eq(todos.dayId, dayRecord.id));
@@ -88,15 +120,18 @@ export async function deleteTodo({
 }
 
 // 5️⃣ Update Todo
+// I changed 'date: string' to 'date: Date' for consistency with your other actions
 export async function updateTodo({
   userId,
   date,
   todoId,
   title,
   completed,
-}: Partial<TodoInput> & { userId: string; date: string; todoId: string; completed?: boolean }) {
+}: { userId: string; date: Date; todoId: string; title?: string; completed?: boolean }) {
+  const dateString = formatDateForDb(date); // Normalize here
+
   const dayRecord = await db.query.days.findFirst({
-    where: and(eq(days.userId, userId), eq(days.date, date)),
+    where: and(eq(days.userId, userId), eq(days.date, dateString)),
   });
 
   if (!dayRecord) return { success: false, error: "Day not found" };
