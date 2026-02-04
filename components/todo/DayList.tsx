@@ -32,7 +32,6 @@ const DayList = ({ day }: DayListProps) => {
 
   // Since your DB stores 1-7, and arrays are 0-indexed, we subtract 1
   const displayDayName = dayofweek[day.dayOfWeek - 1] || "Unknown Day";
-
   return (
     <div className="min-w-[85vw] md:min-w-100 shrink-0 snap-start">
       <TodoCard 
@@ -40,6 +39,7 @@ const DayList = ({ day }: DayListProps) => {
         dat={day.date}
         initialTodos={todos}
       />
+      
     </div>
   )
 }

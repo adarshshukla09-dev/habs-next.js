@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { days, todos } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, between } from "drizzle-orm";
 
 type TodoInput = {
   userId: string;
@@ -89,7 +89,39 @@ export async function ReadTodosForDate({ userId, date }: Pick<TodoInput, "userId
 
   return await db.select().from(todos).where(eq(todos.dayId, dayRecord.id));
 }
+ 
+export async function getTodosInMonth({
+  userId,
+  year,
+  month // 1-12
+}: {
+  userId: string;
+  year: number;
+  month: number;
+}) {
+  try {
+    // Create bounds: "2024-05-01" to "2024-05-31"
+    const startStr = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate(); // Gets last day of month
+    const endStr = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
 
+    const records = await db.query.days.findMany({
+      where: and(
+        eq(days.userId, userId),
+        between(days.date, startStr, endStr)
+      ),
+      with: {
+        todos: true,
+      },
+      orderBy: [days.date],
+    });
+
+    return records;
+  } catch (error) {
+    console.error("Error fetching month data:", error);
+    throw error;
+  }
+}
 // 4️⃣ Delete Todo
 export async function deleteTodo({
   userId,

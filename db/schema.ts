@@ -9,6 +9,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "@/lib/auth-schema";
 
+
+
 export const days = pgTable("days", {
   id: uuid("id").defaultRandom().primaryKey(),
   
@@ -38,5 +40,18 @@ export const todos = pgTable("todos", {
 
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
+import { relations } from "drizzle-orm";
+
+export const daysRelations = relations(days, ({ many }) => ({
+  todos: many(todos),
+}));
+
+export const todosRelations = relations(todos, ({ one }) => ({
+  day: one(days, {
+    fields: [todos.dayId],
+    references: [days.id],
+  }),
+}));
+
 export * from "@/lib/auth-schema";
 

@@ -4,6 +4,7 @@ import DayList from "./DayList";
 import { Loader, Loader2, Plus } from "lucide-react";
 import { createDate, ReadDate } from "@/actions/daysAction";
 import TodoHead from "./header";
+import WeeklyPieCharts from "./weekComplete";
 
 // Define the type clearly to avoid 'any'
 interface DayRecord {
@@ -81,6 +82,7 @@ const [isInitialLoading, setIsInitialLoading] = useState(true); // For first fet
   };
 
 return (
+  <>
   <section className="w-full min-h-screen bg-[#020617] bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-emerald-900/20 via-slate-950 to-slate-950 py-20">
     {/* 1. Header always stays at the top */}
     <TodoHead month={days[0]?.month}/>
@@ -110,6 +112,7 @@ return (
       <div className="flex overflow-x-auto gap-8 px-6 md:px-16 pb-12 no-scrollbar snap-x">
         {days.map((day) => (
           <DayList key={day.id} day={day} />
+
         ))}
 
         {days.length < 7 && (
@@ -133,9 +136,11 @@ return (
       </div>
     )}
   </section>
+  
+      
+  </>
 );
 
 };
 
 export default Week;
-  // 
