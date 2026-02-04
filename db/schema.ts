@@ -8,12 +8,10 @@ import {
   timestamp
 } from "drizzle-orm/pg-core";
 import { user } from "@/lib/auth-schema";
-
-
+import { id } from "date-fns/locale";
 
 export const days = pgTable("days", {
   id: uuid("id").defaultRandom().primaryKey(),
-  
   // Referenced to the 'user' table above
   userId: text("user_id")
     .notNull()
@@ -30,7 +28,6 @@ export const days = pgTable("days", {
 
 export const todos = pgTable("todos", {
   id: uuid("id").defaultRandom().primaryKey(),
-
   dayId: uuid("day_id")
     .notNull()
     .references(() => days.id, { onDelete: "cascade" }),
@@ -40,18 +37,18 @@ export const todos = pgTable("todos", {
 
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
-import { relations } from "drizzle-orm";
 
-export const daysRelations = relations(days, ({ many }) => ({
-  todos: many(todos),
-}));
+export const habits = pgTable("habit",{
+    id: uuid("id").defaultRandom().primaryKey(),
+ dayId: uuid("day_id")
+    .notNull()
+    .references(() => days.id, { onDelete: "cascade" }),
+ userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+    habitName :text("habitName").notNull(),
+    completed :boolean("completed").notNull().default(false),
+})
 
-export const todosRelations = relations(todos, ({ one }) => ({
-  day: one(days, {
-    fields: [todos.dayId],
-    references: [days.id],
-  }),
-}));
-
-export * from "@/lib/auth-schema";
+export * from "@/lib/auth-schema";  
 
