@@ -30,8 +30,6 @@ const TodoCard = ({ dayName, dat, initialTodos }: TodoCardProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   
-  // Tip: In production, consider passing the USER_ID as a prop or using an Auth hook
-  const USER_ID = "kva25DEn8zjFKAYFJWZgBuKc35jJWXsp";
 
   // --- Handlers ---
 
@@ -43,7 +41,6 @@ const TodoCard = ({ dayName, dat, initialTodos }: TodoCardProps) => {
     setIsSubmitting(true);
     try {
       const newTodo = await createTodoForDate({
-        userId: USER_ID,
         title: trimmedValue,
         date: new Date(dat),
       });
@@ -67,7 +64,6 @@ const TodoCard = ({ dayName, dat, initialTodos }: TodoCardProps) => {
 
     try {
       await updateTodo({
-        userId: USER_ID,
         date: new Date(dat),
         todoId: todoId,
         completed: !currentStatus,
@@ -86,7 +82,7 @@ const TodoCard = ({ dayName, dat, initialTodos }: TodoCardProps) => {
     setTodos((prev) => prev.filter((t) => t.id !== todoId));
 
     try {
-      await deleteTodo({ userId: USER_ID, date: new Date(dat), todoId });
+      await deleteTodo({  date: new Date(dat), todoId });
     } catch (err) {
       console.error("Failed to delete:", err);
       setTodos(previousTodos); // Revert on failure
@@ -98,7 +94,6 @@ const TodoCard = ({ dayName, dat, initialTodos }: TodoCardProps) => {
       setIsFetching(true);
       try {
         const allTodos = await ReadTodosForDate({
-          userId: USER_ID,
           date: new Date(dat),
         });
         if (allTodos) setTodos(allTodos as Todo[]);

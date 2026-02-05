@@ -36,7 +36,6 @@ interface DayWithTodos {
  Constants
 ----------------------------------- */
 
-const USER_ID = "kva25DEn8zjFKAYFJWZgBuKc35jJWXsp";
 const COLORS = ["#10b981", "rgba(255, 255, 255, 0.05)"];
 
 /* ----------------------------------
@@ -58,7 +57,6 @@ const MonthlyAnalytics = () => {
         const now = new Date();
 
         const data = await getTodosInMonth({
-          userId: USER_ID,
           year: now.getFullYear(),
           month: now.getMonth() + 1,
         });

@@ -2,14 +2,15 @@
 
 import { db } from "@/db";
 import { days, todos } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { eq, and, between } from "drizzle-orm";
+import { headers } from "next/headers";
 
 /* ----------------------------------
  Types
 ----------------------------------- */
 
 type TodoInput = {
-  userId: string;
   date: Date;
   title: string;
 };
@@ -18,8 +19,14 @@ type TodoInput = {
  Helpers
 ----------------------------------- */
 
- const formatDateForDb = (date: Date) =>
-  date.toISOString().split("T")[0];
+const formatDateForDb = (date: Date) => date.toISOString().split("T")[0];
+async function getAuthUserId() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) throw new Error("Unauthorized");
+  return session.user.id;
+}
 
 async function getDayRecord(userId: string, date: Date) {
   const dateString = formatDateForDb(date);
@@ -33,7 +40,8 @@ async function getDayRecord(userId: string, date: Date) {
  Read All Dates
 ----------------------------------- */
 
-export async function ReadDate({ userId }: { userId: string }) {
+export async function ReadDate() {
+  const userId = await getAuthUserId();
   return db.query.days.findMany({
     where: eq(days.userId, userId),
     orderBy: [days.date],
@@ -44,13 +52,10 @@ export async function ReadDate({ userId }: { userId: string }) {
  Create Date (idempotent)
 ----------------------------------- */
 
-export async function createDate({
-  userId,
-  date,
-}: Pick<TodoInput, "userId" | "date">) {
+export async function createDate({ date }: Pick<TodoInput, "date">) {
   const jsDate = new Date(date);
   const dateString = formatDateForDb(jsDate);
-
+  const userId = await getAuthUserId();
   const existing = await db.query.days.findFirst({
     where: and(eq(days.userId, userId), eq(days.date, dateString)),
   });
@@ -76,16 +81,13 @@ export async function createDate({
  Create Todo
 ----------------------------------- */
 
-export async function createTodoForDate({
-  userId,
-  date,
-  title,
-}: TodoInput) {
+export async function createTodoForDate({ date, title }: Pick<TodoInput, "date" | "title">) {
+    const userId = await getAuthUserId();
   return db.transaction(async (tx) => {
     let day = await getDayRecord(userId, date);
 
     if (!day) {
-      const dayId = await createDate({ userId, date });
+      const dayId = await createDate({  date });
       day = { id: dayId } as typeof days.$inferSelect;
     }
 
@@ -106,16 +108,14 @@ export async function createTodoForDate({
 ----------------------------------- */
 
 export async function ReadTodosForDate({
-  userId,
   date,
-}: Pick<TodoInput, "userId" | "date">) {
+}: Pick<TodoInput ,"date">) {
+      const userId = await getAuthUserId();
+
   const day = await getDayRecord(userId, date);
   if (!day) return [];
 
-  return db
-    .select()
-    .from(todos)
-    .where(eq(todos.dayId, day.id));
+  return db.select().from(todos).where(eq(todos.dayId, day.id));
 }
 
 /* ----------------------------------
@@ -123,26 +123,24 @@ export async function ReadTodosForDate({
 ----------------------------------- */
 
 export async function getTodosInMonth({
-  userId,
+  
   year,
   month,
 }: {
-  userId: string;
   year: number;
   month: number;
 }) {
+      const userId = await getAuthUserId();
+
   const start = `${year}-${String(month).padStart(2, "0")}-01`;
   const end = `${year}-${String(month).padStart(2, "0")}-${new Date(
     year,
     month,
-    0
+    0,
   ).getDate()}`;
 
   return db.query.days.findMany({
-    where: and(
-      eq(days.userId, userId),
-      between(days.date, start, end)
-    ),
+    where: and(eq(days.userId, userId), between(days.date, start, end)),
     with: {
       todos: true,
     },
@@ -155,15 +153,15 @@ export async function getTodosInMonth({
 ----------------------------------- */
 
 export async function deleteTodo({
-  userId,
   date,
   todoId,
 }: {
-  userId: string;
   date: Date;
   todoId: string;
 }) {
   return db.transaction(async (tx) => {
+        const userId = await getAuthUserId();
+
     const day = await getDayRecord(userId, date);
     if (!day) return { success: false };
 
@@ -189,18 +187,18 @@ export async function deleteTodo({
 ----------------------------------- */
 
 export async function updateTodo({
-  userId,
   date,
   todoId,
   title,
   completed,
 }: {
-  userId: string;
   date: Date;
   todoId: string;
   title?: string;
   completed?: boolean;
 }) {
+      const userId = await getAuthUserId();
+
   const day = await getDayRecord(userId, date);
   if (!day) return { success: false };
 

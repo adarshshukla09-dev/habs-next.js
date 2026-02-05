@@ -39,7 +39,7 @@ export default function LandingPage() {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-          <Link href="/login" className="group relative px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-[#020617] font-bold rounded-2xl transition-all flex items-center gap-2 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+          <Link href="/Todo" className="group relative px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-[#020617] font-bold rounded-2xl transition-all flex items-center gap-2 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
             Start Your Journey
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>

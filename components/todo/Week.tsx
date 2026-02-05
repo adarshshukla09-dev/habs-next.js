@@ -11,7 +11,6 @@ interface DayRecord {
   id: string;
   date: string;
   createdAt: Date;
-  userId: string;
   year: number;
   month: number;
   weekOfMonth: number;
@@ -30,7 +29,7 @@ const [isInitialLoading, setIsInitialLoading] = useState(true); // For first fet
 
     const initFetch = async () => {
       try {
-        const read = await ReadDate({ userId: USER_ID });
+        const read = await ReadDate();
         if (read) {
           const todayStr = new Date().toISOString().split("T")[0];
           const filtered = read.filter((da) => da.date >= todayStr);
@@ -54,7 +53,7 @@ const [isInitialLoading, setIsInitialLoading] = useState(true); // For first fet
 
     try {
       const dayId = await createDate({
-        userId: USER_ID,
+        
         date: futureDate,
       });
 
@@ -65,7 +64,7 @@ const [isInitialLoading, setIsInitialLoading] = useState(true); // For first fet
           id: dayId,
           date: futureDate.toISOString().split("T")[0],
           createdAt: new Date(),
-          userId: USER_ID,
+          
           year: futureDate.getFullYear(),
           month: futureDate.getMonth() + 1,
           weekOfMonth: Math.ceil(futureDate.getDate() / 7),

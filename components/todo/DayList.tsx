@@ -13,7 +13,6 @@ export interface DayRecord {
   date: string;
   id: string;
   createdAt: Date;
-  userId: string;
   year: number;
   month: number;
   weekOfMonth: number;
