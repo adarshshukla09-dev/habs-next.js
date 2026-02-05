@@ -9,7 +9,7 @@ interface Todo {
 }
 
 // Define the shape of a SINGLE day record
-interface DayRecord {
+export interface DayRecord {
   date: string;
   id: string;
   createdAt: Date;
@@ -21,7 +21,7 @@ interface DayRecord {
 }
 
 // Props should represent a single day being rendered
-interface DayListProps {
+export interface DayListProps {
   day: DayRecord;
 }
 
